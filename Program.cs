@@ -3,6 +3,10 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Demo.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
+using Microsoft.AspNetCore.Builder;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +14,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -41,6 +44,15 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseSpa(spa =>
+    {
+        spa.Options.SourcePath = "ClientApp";
+
+        if (env.IsDevelopment())
+        {
+            spa.UseReactDevelopmentServer(npmScript: "start");
+        }
+    });
 }
 
 app.UseHttpsRedirection();

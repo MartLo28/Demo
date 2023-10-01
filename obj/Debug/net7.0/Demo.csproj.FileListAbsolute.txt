@@ -75,3 +75,5 @@ C:\Users\jeanc\swe_projects\Demo\bin\Debug\net7.0\Microsoft.Extensions.Dependenc
 C:\Users\jeanc\swe_projects\Demo\bin\Debug\net7.0\Mono.TextTemplating.dll
 C:\Users\jeanc\swe_projects\Demo\bin\Debug\net7.0\System.CodeDom.dll
 C:\Users\jeanc\swe_projects\Demo\bin\Debug\net7.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\jeanc\swe_projects\Demo\bin\Debug\net7.0\package-lock.json
+C:\Users\jeanc\swe_projects\Demo\bin\Debug\net7.0\package.json

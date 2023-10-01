@@ -22,5 +22,6 @@ namespace Demo.Models
         public DateTime CreatedAt { get; set; }
 
         public DateTime LastLogin { get; set; }
+        public bool HasCompletedWalkthrough { get; set; }
     }
 }

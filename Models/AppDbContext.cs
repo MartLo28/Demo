@@ -10,8 +10,7 @@ namespace Demo.Models
         }
 
         public DbSet<User> Users { get; set; }
-        public DbSet<Product> Products { get; set; }
-
+        public DbSet<WalkthroughStep> WalkthroughSteps { get; set; }
     }
 
 }
