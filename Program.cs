@@ -20,6 +20,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSingleton<IPasswordHasher, Argon2PasswordHasher>();
+
 
 // Add JWT Authentication
 var key = Encoding.ASCII.GetBytes(configuration["Jwt:SecretKey"]);

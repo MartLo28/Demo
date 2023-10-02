@@ -12,6 +12,8 @@ using Microsoft.IdentityModel.Tokens;
 using Demo.Models;
 using Microsoft.Extensions.Configuration;
 using Konscious.Security.Cryptography;
+using Demo.Services;
+
 
 
 namespace Demo.Controllers
@@ -22,11 +24,13 @@ namespace Demo.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly PasswordHasher _passwordHasher;
 
         public UserController(AppDbContext context, IConfiguration configuration)
         {
             _context = context;
             _configuration = configuration;
+            _passwordHasher = passwordHasher;
         }
 
         public byte[] HashPassword(string password)
@@ -47,16 +51,15 @@ namespace Demo.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register(User newUser)
+        public async Task<ActionResult> Register(User newUser)
         {
             if (newUser == null || string.IsNullOrEmpty(newUser.Username) || string.IsNullOrEmpty(newUser.PasswordHash))
             {
                 return BadRequest("Invalid user data");
             }
 
-            var hashedPassword = HashPassword(newUser.PasswordHash);
-            newUser.PasswordHash = Convert.ToBase64String(hashedPassword);
-
+            var hashedPassword = _passwordHasher.HashPassword(newUser.PasswordHash);  // Modify this line
+            newUser.PasswordHash = Convert.ToBase64String(hashedPassword)
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
