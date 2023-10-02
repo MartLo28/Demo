@@ -5,10 +5,14 @@ using Demo.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.AspNetCore.Builder;
-
+using Microsoft.Extensions.Configuration;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+IConfiguration configuration = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .Build();
 
 // Add services to the container.
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -18,7 +22,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Add JWT Authentication
-var key = Encoding.ASCII.GetBytes("YourSecretKeyHere");
+var key = Encoding.ASCII.GetBytes(configuration["Jwt:SecretKey"]);
 builder.Services.AddAuthentication(x =>
 {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -48,7 +52,7 @@ if (app.Environment.IsDevelopment())
     {
         spa.Options.SourcePath = "ClientApp";
 
-        if (env.IsDevelopment())
+        if (app.Environment.IsDevelopment())
         {
             spa.UseReactDevelopmentServer(npmScript: "start");
         }

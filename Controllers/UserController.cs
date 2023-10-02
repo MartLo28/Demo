@@ -10,6 +10,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using Demo.Models;
+using Microsoft.Extensions.Configuration;
+using Konscious.Security.Cryptography;
 
 
 namespace Demo.Controllers
@@ -19,24 +21,42 @@ namespace Demo.Controllers
     public class UserController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IConfiguration _configuration;
 
-        public UserController(AppDbContext context)
+        public UserController(AppDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
+        }
+
+        public byte[] HashPassword(string password)
+        {
+            var passwordBytes = Encoding.UTF8.GetBytes(password);
+            var salt = new byte[16]; // Generate a 16-byte salt
+            new RNGCryptoServiceProvider().GetBytes(salt);
+
+            var argon2 = new Argon2id(passwordBytes)
+            {
+                Salt = salt,
+                DegreeOfParallelism = 8, // number of threads
+                MemorySize = 65536, // 64 MB
+                Iterations = 4
+            };
+
+            return argon2.GetBytes(16);
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register(User newUser)
         {
-            // Hash the password
-            using (var sha256 = SHA256.Create())
+            if (newUser == null || string.IsNullOrEmpty(newUser.Username) || string.IsNullOrEmpty(newUser.PasswordHash))
             {
-                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(newUser.PasswordHash));
-                var hash = BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
-                newUser.PasswordHash = hash;
+                return BadRequest("Invalid user data");
             }
 
-            // Save the user to the database
+            var hashedPassword = HashPassword(newUser.PasswordHash);
+            newUser.PasswordHash = Convert.ToBase64String(hashedPassword);
+
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
@@ -46,22 +66,22 @@ namespace Demo.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(string username, string password)
         {
-            // Hash the incoming password to compare
-            using (var sha256 = SHA256.Create())
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
-                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-                var hash = BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
+                return BadRequest("Username and password are required");
+            }
 
-                // Find the user by username and hashed password
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username && u.PasswordHash == hash);
+            var hashedPassword = Convert.ToBase64String(HashPassword(password));
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username && u.PasswordHash == hashedPassword);
 
-                if (user == null)
-                {
-                    return Unauthorized(new { Message = "Invalid username or password" });
-                }
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
 
                 var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.ASCII.GetBytes("YourSecretKeyHere");
+                var key = Encoding.ASCII.GetBytes(_configuration["Jwt:SecretKey"]);
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(new[] { new Claim("id", user.Id.ToString()) }),
